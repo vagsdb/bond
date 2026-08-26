@@ -44,28 +44,73 @@ The current interpretation layer is deliberately transparent and conservative:
 
 A future authenticated backend can replace this local-only layer without changing the product interaction model.
 
-## Internal Matching Lab
+## Bond Matching Engine v1.1
 
-Bond now includes an internal diagnostic surface at:
+The internal matching engine now uses the complete first decision architecture:
 
-`https://vagsdb.github.io/bond/lab/`
+```text
+candidate
+   ↓
+PROPOSER
+   ↓
+ADVERSARIAL CRITIC
+   ↓
+FINAL THRESHOLD
+   ├── reject
+   ├── hold
+   └── introduce
+          ↓
+Connection Hypothesis becomes eligible for privacy review
+```
 
-The Matching Lab is **not** a public people browser. It reads the same browser-local Bond model and evaluates it against a deliberately varied set of synthetic Athens profiles.
+### 1. Proposer
 
-It exposes diagnostic numbers for:
+The proposer makes the strongest evidence-grounded case for an encounter using:
 
 - shared core;
 - interesting divergence;
-- reciprocity;
+- reciprocal value;
+- **directional reciprocity** (`you → them` and `them → you`);
 - current intention fit;
-- boundary penalty;
-- final internal score and `introduce / hold / reject` decision.
+- `Not this` boundary penalties.
 
-It also produces a deterministic draft **Connection Hypothesis** and shows both positive evidence and reasons against an introduction.
+Its diagnostic formula remains explicit and falsifiable. It is not treated as a compatibility truth.
 
-Numbers are visible only because the lab is a debugging instrument. The real Bond product should never show people a compatibility percentage.
+### 2. Adversarial critic
 
-The current engine is intentionally deterministic. Its job is to make bad assumptions visible before an AI layer is allowed to make them persuasive.
+The critic is a separate module whose job is to **falsify the proposal**, not improve it. It searches for:
+
+- explicit boundary conflict;
+- weak reciprocity;
+- asymmetric usefulness;
+- thin shared core;
+- novelty without a meaningful anchor;
+- similarity traps;
+- weak timing/current-intention fit;
+- insufficient human-model evidence;
+- persuasive-story risk, where a fluent explanation could sound stronger than the evidence.
+
+The critic returns structured findings with severity plus an overall risk and verdict: `clear / caution / oppose`.
+
+### 3. Final threshold
+
+Neither proposer nor critic can authorize an introduction alone. The final gate applies hard constraints and minimum evidence requirements.
+
+Only a pair that clears the final gate can expose a Connection Hypothesis. For `hold` or `reject`, the lab deliberately withholds the hypothesis from the hypothetical user even though the proposer may have been able to write one.
+
+This prevents **good prose from rescuing a weak match**.
+
+## Internal Matching Lab
+
+The diagnostic surface is at:
+
+`https://vagsdb.github.io/bond/lab/`
+
+The lab is **not** a public people browser. It reads the same browser-local Bond model and evaluates it against a deliberately varied set of synthetic Athens profiles.
+
+It exposes proposer strength, critic findings, directional reciprocity, critic risk, survival score, and the final `introduce / hold / reject` gate decision. Numerical values exist only for debugging and experiments; the public Bond experience should never show compatibility percentages.
+
+The matching layer is English/Greek aware for the Athens prototype and uses Unicode-safe tokenization.
 
 ## Run locally
 
@@ -86,7 +131,7 @@ npm run build
 
 Next.js exports the static Pages site to `out/`.
 
-## v0.1 build sequence
+## Build sequence
 
 1. Product constitution ✅
 2. Eye-smooth web shell and GitHub Pages deployment ✅
@@ -95,20 +140,21 @@ Next.js exports the static Pages site to `out/`.
 5. Want / Not This / social intention model ✅
 6. Progressive commitment + hidden detailed model ✅
 7. Synthetic candidate retrieval scaffold ✅
-8. Shared-core + interesting-divergence scorer ✅
-9. Reciprocity + intention + boundary evaluation ✅
-10. Internal Matching Lab + deterministic hypothesis draft ✅
-11. Adversarial match critic
-12. AI-written Connection Hypothesis
-13. Introduction state machine and expiry
-14. Mutual reveal
-15. Pair-specific opening experiment
-16. Messaging
-17. Outcome collection
-18. Closed same-city pilot
+8. Shared-core + interesting-divergence proposer ✅
+9. Directional reciprocity + intention + boundary evaluation ✅
+10. Adversarial match critic ✅
+11. Final `proposer → critic → threshold` gate ✅
+12. Internal Matching Lab v1.1 ✅
+13. Privacy-safe AI-written Connection Hypothesis
+14. Introduction state machine and expiry
+15. Mutual reveal
+16. Pair-specific opening experiment
+17. Messaging
+18. Outcome collection and model learning
+19. Closed same-city pilot
 
 ## Core hypothesis
 
 > Can AI-curated shared-core/productive-divergence introductions create more “I’m glad we met” outcomes than conventional similarity-based matching?
 
-See [`PRODUCT_CONSTITUTION.md`](./PRODUCT_CONSTITUTION.md) for the non-negotiable design rules, [`docs/PRIVATE_HUMAN_MODEL.md`](./docs/PRIVATE_HUMAN_MODEL.md) for the local model design, and [`docs/MATCHING_MODEL.md`](./docs/MATCHING_MODEL.md) for the current matching assumptions.
+See [`PRODUCT_CONSTITUTION.md`](./PRODUCT_CONSTITUTION.md) for the non-negotiable design rules, [`docs/PRIVATE_HUMAN_MODEL.md`](./docs/PRIVATE_HUMAN_MODEL.md) for the local model design, and [`docs/MATCHING_MODEL.md`](./docs/MATCHING_MODEL.md) for the v1.1 matching architecture.
