@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   basePath: isProduction ? "/bond" : "",
-  assetPrefix: isProduction ? "/bond/" : "",
 };
 
 export default nextConfig;
