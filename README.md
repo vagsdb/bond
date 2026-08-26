@@ -1,52 +1,31 @@
 # Bond
 
-Bond is the working repository for **Serendipity v0.1** — a human encounter engine designed to find people who might matter to each other without turning people into a browseable marketplace.
+Bond is a human encounter engine designed to find people who might matter to each other without turning people into a browseable marketplace.
 
-The product is intentionally unlike conventional social or dating software: no feed, no swiping, no follower graph, no popularity ranking, and no artificial matching quota.
+The product is intentionally unlike conventional social or dating software: no feed, no swiping, no follower graph, no popularity ranking, no paid exposure, and no artificial matching quota.
 
-## GitHub Pages
+> **Do not show people more people. Find the one person they would not have known to look for.**
 
-Bond is configured as a static Next.js export and includes an automated GitHub Pages workflow.
+## Public prototype
 
-**Public prototype:** `https://vagsdb.github.io/bond/`
+Bond is configured as a static Next.js export and deploys to GitHub Pages:
 
-For a new repository, GitHub requires one repository-level setting before the first deployment:
+`https://vagsdb.github.io/bond/`
 
-1. Open **Settings → Pages**.
-2. Under **Build and deployment → Source**, select **GitHub Actions**.
-3. Open **Actions** and run **Deploy Bond to GitHub Pages** once if a deployment has not started automatically.
+The public prototype remains deliberately quiet:
 
-After that, pushes to `main` publish automatically.
+1. three conversational questions;
+2. **What I think I heard** reflection;
+3. **More of this / Not this**;
+4. one current social intention;
+5. **I'm looking** — no people browser;
+6. inspectable private human model behind the experience.
 
-## Current public prototype
+The GitHub Pages prototype stores its model in the user's browser with `localStorage`. It does not pretend a production AI/backend exists where none is deployed.
 
-The current GitHub Pages prototype implements a deliberately low-friction, progressive-commitment flow:
+## Matching Engine v1.1 ✅
 
-1. **Three conversational questions** — no public profile form.
-2. **What I think I heard** — Bond reflects the user's own words back before making inferences.
-3. **More of this / Not this** — desire and negative space are equally important.
-4. **One social intention** — a standing intention rather than an instant search query.
-5. **I'm looking** — no people browser; the interface becomes intentionally quiet.
-6. **What Bond understands about me** — the detailed private model exists, but stays behind the experience and remains inspectable/editable.
-
-The interface is designed around progressive disclosure: understand first, reveal later, and only interrupt the user when an introduction has a reason.
-
-### Privacy in this prototype
-
-GitHub Pages is static hosting and cannot securely hold an AI provider secret or production user database. For that reason, v0.1 stores the private human model in the user's own browser using `localStorage`.
-
-The current interpretation layer is deliberately transparent and conservative:
-
-- direct statements remain direct evidence;
-- tentative interpretations are explicitly marked tentative;
-- the user can correct the model;
-- no hidden production AI backend is implied.
-
-A future authenticated backend can replace this local-only layer without changing the product interaction model.
-
-## Bond Matching Engine v1.1
-
-The internal matching engine now uses the complete first decision architecture:
+The completed first decision engine is:
 
 ```text
 candidate
@@ -55,62 +34,147 @@ PROPOSER
    ↓
 ADVERSARIAL CRITIC
    ↓
-FINAL THRESHOLD
+DETERMINISTIC FINAL GATE
    ├── reject
    ├── hold
    └── introduce
-          ↓
-Connection Hypothesis becomes eligible for privacy review
 ```
 
-### 1. Proposer
+The proposer reasons over shared core, interesting divergence, directional reciprocity, current intention and boundaries. The critic independently attacks weak reciprocity, asymmetric value, thin common ground, novelty without an anchor, similarity traps, timing, insufficient evidence, boundary conflicts and persuasive-story risk.
 
-The proposer makes the strongest evidence-grounded case for an encounter using:
+Only deterministic software releases an introduction.
 
-- shared core;
-- interesting divergence;
-- reciprocal value;
-- **directional reciprocity** (`you → them` and `them → you`);
-- current intention fit;
-- `Not this` boundary penalties.
-
-Its diagnostic formula remains explicit and falsifiable. It is not treated as a compatibility truth.
-
-### 2. Adversarial critic
-
-The critic is a separate module whose job is to **falsify the proposal**, not improve it. It searches for:
-
-- explicit boundary conflict;
-- weak reciprocity;
-- asymmetric usefulness;
-- thin shared core;
-- novelty without a meaningful anchor;
-- similarity traps;
-- weak timing/current-intention fit;
-- insufficient human-model evidence;
-- persuasive-story risk, where a fluent explanation could sound stronger than the evidence.
-
-The critic returns structured findings with severity plus an overall risk and verdict: `clear / caution / oppose`.
-
-### 3. Final threshold
-
-Neither proposer nor critic can authorize an introduction alone. The final gate applies hard constraints and minimum evidence requirements.
-
-Only a pair that clears the final gate can expose a Connection Hypothesis. For `hold` or `reject`, the lab deliberately withholds the hypothesis from the hypothetical user even though the proposer may have been able to write one.
-
-This prevents **good prose from rescuing a weak match**.
-
-## Internal Matching Lab
-
-The diagnostic surface is at:
+Internal lab:
 
 `https://vagsdb.github.io/bond/lab/`
 
-The lab is **not** a public people browser. It reads the same browser-local Bond model and evaluates it against a deliberately varied set of synthetic Athens profiles.
+## Bond v2.0 — real-product foundation 🚧
 
-It exposes proposer strength, critic findings, directional reciprocity, critic risk, survival score, and the final `introduce / hold / reject` gate decision. Numerical values exist only for debugging and experiments; the public Bond experience should never show compatibility percentages.
+v2.0 extends the architecture from **reasoning about a pair** toward **creating and learning from a real encounter**.
 
-The matching layer is English/Greek aware for the Athens prototype and uses Unicode-safe tokenization.
+```text
+Private Human Model
+        ↓
+Multi-dimensional semantic profile
+        ↓
+Hard eligibility
+        ↓
+Semantic retrieval
+        ↓
+Proposer
+        ↓
+Critic
+        ↓
+Deterministic gate
+        ↓
+Hypothesis privacy review
+        ↓
+Independent mutual acceptance
+        ↓
+Progressive reveal
+        ↓
+Pair conversation / offline encounter
+        ↓
+Outcome learning
+```
+
+### Implemented in the repository
+
+- multi-dimensional semantic profile contract;
+- vector-ready semantic segments;
+- retrieval layer with hard eligibility and multi-dimension scoring;
+- compatibility with real embeddings plus lexical fallback for the static lab;
+- Connection Hypothesis privacy gate;
+- 48-hour introduction state machine;
+- independent `accept / decline` decisions;
+- invisible rejection projection;
+- mutual-only minimal identity reveal;
+- conversation-open transition;
+- meaningful-encounter outcome trajectory;
+- Meaningful Encounter Rate utility;
+- Supabase/Postgres schema;
+- pgvector-ready semantic storage;
+- Row Level Security;
+- blocks and reports;
+- masked introduction RPC;
+- decision RPC that never exposes the other person's response;
+- service-role-only vector candidate pool;
+- v2 Systems Lab.
+
+v2 Systems Lab:
+
+`https://vagsdb.github.io/bond/v2/`
+
+The `/v2/` route is still a **local diagnostic simulation using synthetic candidates**. It proves the software interfaces from semantic retrieval through outcome learning without converting the public product into a people browser.
+
+### What is not yet production-live
+
+GitHub Pages cannot safely provide server secrets, production authentication, private database storage, embedding generation, service-role vector retrieval, real-time messaging or an AI provider.
+
+Therefore these require a separately deployed backend before a real-user pilot:
+
+- Supabase project deployment;
+- real authentication;
+- real-user population;
+- server-side embedding generation;
+- server-side multi-vector retrieval;
+- production AI proposer/critic/hypothesis generation;
+- real-time messaging;
+- production abuse/safety operations.
+
+The migration is ready at:
+
+`supabase/migrations/20260826_bond_v2.sql`
+
+See [`docs/V2_BACKEND_SETUP.md`](./docs/V2_BACKEND_SETUP.md) for deployment requirements.
+
+## v2 semantic representation
+
+A person is not reduced to one vector. Bond can represent separate semantic spaces for:
+
+- curiosity;
+- desired exposure;
+- conversation style;
+- temperament;
+- wants;
+- `Not this`;
+- current social intention;
+- later life-chapter context.
+
+The intended production architecture is:
+
+```text
+deterministic constraints
+        ↓
+multi-vector retrieval
+        ↓
+pairwise proposer
+        ↓
+adversarial critic
+        ↓
+deterministic release gate
+```
+
+`Not this` primarily functions as a boundary/exclusion layer rather than a signal that retrieves more of the unwanted thing.
+
+## Outcome philosophy
+
+Bond should not learn from attention metrics as its primary target.
+
+The trajectory of interest is:
+
+```text
+introduction
+→ mutual acceptance
+→ conversation
+→ offline meeting
+→ glad we met
+→ continued contact
+```
+
+The north-star metric remains:
+
+> **Meaningful Encounter Rate = worthwhile encounters / introductions released**
 
 ## Run locally
 
@@ -119,9 +183,11 @@ npm install
 npm run dev
 ```
 
-Then open `http://localhost:3000`.
+Then open:
 
-The local Matching Lab is at `http://localhost:3000/lab/`.
+- Bond: `http://localhost:3000`
+- Matching Lab: `http://localhost:3000/lab/`
+- v2 Systems Lab: `http://localhost:3000/v2/`
 
 ## Production build
 
@@ -129,32 +195,34 @@ The local Matching Lab is at `http://localhost:3000/lab/`.
 npm run build
 ```
 
-Next.js exports the static Pages site to `out/`.
+Next.js statically exports the GitHub Pages prototype to `out/`.
 
-## Build sequence
+## Current milestone map
 
 1. Product constitution ✅
-2. Eye-smooth web shell and GitHub Pages deployment ✅
+2. Quiet public UX ✅
 3. Conversational onboarding ✅
-4. Structured private human model ✅
-5. Want / Not This / social intention model ✅
-6. Progressive commitment + hidden detailed model ✅
-7. Synthetic candidate retrieval scaffold ✅
-8. Shared-core + interesting-divergence proposer ✅
-9. Directional reciprocity + intention + boundary evaluation ✅
-10. Adversarial match critic ✅
-11. Final `proposer → critic → threshold` gate ✅
-12. Internal Matching Lab v1.1 ✅
-13. Privacy-safe AI-written Connection Hypothesis
-14. Introduction state machine and expiry
-15. Mutual reveal
-16. Pair-specific opening experiment
-17. Messaging
-18. Outcome collection and model learning
-19. Closed same-city pilot
+4. Private human model ✅
+5. Want / Not This / social intention ✅
+6. Matching Engine v1.1: proposer → critic → gate ✅
+7. v2 multi-dimensional semantic profile ✅
+8. v2 semantic retrieval contract ✅
+9. v2 hypothesis privacy gate ✅
+10. v2 mutual introduction state machine ✅
+11. v2 progressive reveal contract ✅
+12. v2 outcome-learning model ✅
+13. Supabase/Postgres + pgvector + RLS schema ✅
+14. v2 local Systems Lab ✅
+15. Deploy production backend ⬜
+16. Real authentication + real users ⬜
+17. Embedding service + server retrieval ⬜
+18. Production AI proposer / critic / hypothesis ⬜
+19. Real-time pair messaging ⬜
+20. Closed Athens pilot ⬜
+21. Measure Meaningful Encounter Rate ⬜
 
-## Core hypothesis
+## Core invariant
 
-> Can AI-curated shared-core/productive-divergence introductions create more “I’m glad we met” outcomes than conventional similarity-based matching?
+> **AI may propose. AI may criticize. Deterministic software controls release.**
 
-See [`PRODUCT_CONSTITUTION.md`](./PRODUCT_CONSTITUTION.md) for the non-negotiable design rules, [`docs/PRIVATE_HUMAN_MODEL.md`](./docs/PRIVATE_HUMAN_MODEL.md) for the local model design, and [`docs/MATCHING_MODEL.md`](./docs/MATCHING_MODEL.md) for the v1.1 matching architecture.
+See [`PRODUCT_CONSTITUTION.md`](./PRODUCT_CONSTITUTION.md), [`docs/MATCHING_MODEL.md`](./docs/MATCHING_MODEL.md), [`docs/V1_1_ACCEPTANCE.md`](./docs/V1_1_ACCEPTANCE.md), [`docs/V2_ARCHITECTURE.md`](./docs/V2_ARCHITECTURE.md), and [`docs/V2_BACKEND_SETUP.md`](./docs/V2_BACKEND_SETUP.md).
