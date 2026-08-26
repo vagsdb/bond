@@ -304,11 +304,11 @@ export default function BondV2Lab() {
                 <div className="projectionGrid">
                   <section>
                     <span>Your user-facing projection</span>
-                    <strong>{visible ? `${visible.visible_status} · ${visible.myDecision}` : "nothing visible"}</strong>
+                    <strong>{visible ? `${visible.status} · ${visible.myDecision}` : "nothing visible"}</strong>
                   </section>
                   <section>
                     <span>Their user-facing projection</span>
-                    <strong>{otherVisible ? `${otherVisible.visible_status} · ${otherVisible.myDecision}` : "nothing visible"}</strong>
+                    <strong>{otherVisible ? `${otherVisible.status} · ${otherVisible.myDecision}` : "nothing visible"}</strong>
                   </section>
                 </div>
 
