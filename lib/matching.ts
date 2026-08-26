@@ -37,23 +37,60 @@ const STOPWORDS = new Set([
   "i", "in", "is", "it", "me", "my", "of", "on", "or", "that", "the", "their", "them",
   "they", "this", "to", "we", "who", "with", "would", "you", "your", "someone", "people",
   "person", "more", "want", "like", "meet", "kind", "really", "something", "things",
+  "και", "να", "το", "τα", "τη", "την", "της", "του", "των", "σε", "στο", "στη", "στην",
+  "με", "για", "απο", "που", "πως", "ειναι", "ενα", "μια", "εναν", "μου", "σου", "τους",
+  "τις", "τον", "δεν", "θα", "πολυ", "κατι", "καποιον", "καποια", "ανθρωπο", "ανθρωπους",
 ]);
 
 const THEMES: Record<string, string[]> = {
-  depth: ["deep", "long", "ideas", "philosophy", "meaning", "question", "curious", "intellectual", "think"],
-  challenge: ["challenge", "different", "disagree", "unexpected", "surprise", "opposite", "outside"],
-  visual: ["visual", "photography", "design", "architecture", "image", "art", "film"],
-  science: ["science", "biology", "research", "medicine", "medical", "technology", "engineering"],
-  city: ["city", "urban", "street", "walk", "wander", "athens", "place", "neighborhood"],
-  culture: ["music", "book", "literature", "museum", "exhibition", "culture", "cinema", "art"],
-  making: ["make", "build", "craft", "create", "maker", "restore", "design"],
-  quiet: ["quiet", "reserved", "calm", "one-to-one", "small group", "slow"],
-  play: ["funny", "humor", "playful", "strange", "absurd", "laugh"],
-  learning: ["learn", "teach", "explain", "discover", "new", "unknown", "curiosity"],
+  depth: [
+    "deep", "long", "ideas", "philosophy", "meaning", "question", "curious", "intellectual", "think",
+    "βαθυ", "βαθια", "ιδεες", "φιλοσοφ", "νοημα", "ερωτη", "περιεργ", "διανοητ", "σκεψη",
+  ],
+  challenge: [
+    "challenge", "different", "disagree", "unexpected", "surprise", "opposite", "outside",
+    "προκλη", "διαφορετ", "διαφων", "απροσδοκ", "εκπληξ", "αντιθετ", "εκτος",
+  ],
+  visual: [
+    "visual", "photography", "design", "architecture", "image", "art", "film",
+    "οπτικ", "φωτογραφ", "σχεδιασ", "αρχιτεκτον", "εικονα", "τεχνη", "σινεμα",
+  ],
+  science: [
+    "science", "biology", "research", "medicine", "medical", "technology", "engineering",
+    "επιστημ", "βιολογ", "ερευν", "ιατρικ", "τεχνολογ", "μηχανικ",
+  ],
+  city: [
+    "city", "urban", "street", "walk", "wander", "athens", "place", "neighborhood",
+    "πολη", "αστικ", "δρομο", "περπατ", "βολο", "αθηνα", "μερος", "γειτονια",
+  ],
+  culture: [
+    "music", "book", "literature", "museum", "exhibition", "culture", "cinema", "art",
+    "μουσικ", "βιβλι", "λογοτεχν", "μουσει", "εκθεσ", "πολιτισ", "σινεμα", "τεχνη",
+  ],
+  making: [
+    "make", "build", "craft", "create", "maker", "restore", "design",
+    "φτιαχν", "κατασκευ", "χειροτεχν", "δημιουργ", "επισκευ", "σχεδιασ",
+  ],
+  quiet: [
+    "quiet", "reserved", "calm", "one-to-one", "small group", "slow",
+    "ησυχ", "εσωστρεφ", "ηρεμ", "ενας προς εναν", "μικρη ομαδα", "αργ",
+  ],
+  play: [
+    "funny", "humor", "playful", "strange", "absurd", "laugh",
+    "αστει", "χιουμορ", "παιχνιδ", "παραξεν", "παραλογ", "γελιο",
+  ],
+  learning: [
+    "learn", "teach", "explain", "discover", "new", "unknown", "curiosity",
+    "μαθ", "διδασκ", "εξηγ", "ανακαλυψ", "καινουργ", "αγνωστ", "περιεργ",
+  ],
 };
 
 function clamp(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function normalizeText(value: string) {
+  return value.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "");
 }
 
 function textOfModel(model: HumanModel) {
@@ -88,10 +125,8 @@ function textOfCandidate(candidate: CandidateProfile) {
 
 function tokens(value: string) {
   return new Set(
-    value
-      .toLowerCase()
-      .normalize("NFKD")
-      .replace(/[^a-z0-9\s-]/g, " ")
+    normalizeText(value)
+      .replace(/[^\p{L}\p{N}\s-]/gu, " ")
       .split(/\s+/)
       .map((token) => token.replace(/^-|-$/g, ""))
       .filter((token) => token.length > 2 && !STOPWORDS.has(token)),
@@ -111,9 +146,9 @@ function overlapScore(a: string, b: string) {
 }
 
 function themeSet(text: string) {
-  const lower = text.toLowerCase();
+  const lower = normalizeText(text);
   return Object.entries(THEMES)
-    .filter(([, terms]) => terms.some((term) => lower.includes(term)))
+    .filter(([, terms]) => terms.some((term) => lower.includes(normalizeText(term))))
     .map(([theme]) => theme);
 }
 
@@ -129,24 +164,26 @@ function sharedThemeScore(a: string, b: string) {
 }
 
 function divergenceScore(model: HumanModel, candidate: CandidateProfile) {
-  const desired = [...model.wants, model.desiredExposure.evidence, model.socialIntention].join(" ").toLowerCase();
-  const candidateText = textOfCandidate(candidate).toLowerCase();
-  const sameWorldPenalty = model.notThis.some((item) => candidateText.includes(item.toLowerCase())) ? 35 : 0;
-  const explicitDifference = ["outside", "different", "new", "opposite", "challenge", "surprise"]
-    .some((term) => desired.includes(term));
+  const desired = normalizeText([...model.wants, model.desiredExposure.evidence, model.socialIntention].join(" "));
+  const candidateText = normalizeText(textOfCandidate(candidate));
+  const sameWorldPenalty = model.notThis.some((item) => candidateText.includes(normalizeText(item))) ? 35 : 0;
+  const explicitDifference = [
+    "outside", "different", "new", "opposite", "challenge", "surprise",
+    "εκτος", "διαφορετ", "καινουργ", "αντιθετ", "προκλη", "εκπληξ",
+  ].some((term) => desired.includes(term));
   const crossWorld = overlapScore(model.curiosity.evidence, candidate.world) < 18 ? 72 : 44;
   const noveltyBoost = explicitDifference ? 18 : 8;
   return clamp(crossWorld + noveltyBoost - sameWorldPenalty);
 }
 
 function boundaryPenalty(model: HumanModel, candidate: CandidateProfile) {
-  const candidateText = textOfCandidate(candidate).toLowerCase();
+  const candidateText = normalizeText(textOfCandidate(candidate));
   const userBoundaryHits = model.notThis.filter((item) => {
     const meaningful = [...tokens(item)];
     return meaningful.some((token) => candidateText.includes(token));
   }).length;
 
-  const userText = textOfModel(model).toLowerCase();
+  const userText = normalizeText(textOfModel(model));
   const candidateBoundaryHits = candidate.notThis.filter((item) => {
     const meaningful = [...tokens(item)];
     return meaningful.some((token) => userText.includes(token));
