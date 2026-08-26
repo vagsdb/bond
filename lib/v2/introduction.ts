@@ -103,8 +103,8 @@ export function openConversation(introduction: IntroductionSnapshot) {
 }
 
 /**
- * User-facing projection. The other person's decision is never exposed while pending,
- * and a decline by the other side disappears instead of becoming a visible rejection.
+ * User-facing projection. Neither person's decline becomes a visible rejection object.
+ * Once either side says no, the introduction simply disappears from both views.
  */
 export function visibleIntroductionFor(
   introduction: IntroductionSnapshot,
@@ -114,6 +114,7 @@ export function visibleIntroductionFor(
   mutual: boolean;
 } | null {
   if (viewerId !== introduction.userA && viewerId !== introduction.userB) return null;
+  if (introduction.status === "declined" || introduction.status === "expired" || introduction.status === "closed") return null;
 
   const myDecision = viewerId === introduction.userA
     ? introduction.userADecision
@@ -122,8 +123,7 @@ export function visibleIntroductionFor(
     ? introduction.userBDecision
     : introduction.userADecision;
 
-  // Invisible rejection: if the other person declined, the introduction simply vanishes.
-  if (otherDecision === "decline" && myDecision !== "decline") return null;
+  if (myDecision === "decline" || otherDecision === "decline") return null;
 
   const { userADecision: _a, userBDecision: _b, ...safe } = introduction;
   return {
