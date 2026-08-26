@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PilotBridge from "./PilotBridge";
 import "./globals.css";
 import "./profile.css";
 import "./tagline.css";
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <PilotBridge />
+      </body>
     </html>
   );
 }
