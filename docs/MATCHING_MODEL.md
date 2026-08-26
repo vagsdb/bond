@@ -1,28 +1,49 @@
-# Bond Matching Engine v0.1
+# Bond Matching Engine v1.1
 
-The first matching engine is intentionally **deterministic, inspectable, and conservative**.
+Bond v1.1 makes the first complete decision architecture explicit:
 
-It is not intended to be the final intelligence layer. Its purpose is to make the product's matching assumptions explicit before a language model or learned recommender can make those assumptions harder to inspect.
+```text
+candidate retrieval
+       ↓
+PROPOSER
+       ↓
+ADVERSARIAL CRITIC
+       ↓
+FINAL THRESHOLD
+   ↙      ↓       ↘
+reject   hold   introduce
+                  ↓
+Connection Hypothesis becomes eligible
+```
+
+The engine remains intentionally **deterministic, inspectable, bilingual-aware, and conservative**. The purpose is not to claim that hand-written rules are the final intelligence layer; it is to make Bond's assumptions falsifiable before a language model or learned recommender can hide them inside persuasive output.
 
 ## Public product vs internal lab
 
 The public Bond experience does **not** show people to browse and does **not** show compatibility percentages.
 
-The internal Matching Lab may show numerical components because it is a diagnostic instrument. Those numbers are for developers and experiments, not for users.
+The internal Matching Lab may expose numerical components because it is a diagnostic instrument. Those values are developer evidence, not social currency.
 
-The lab currently runs against a small set of synthetic Athens candidate profiles. No real users are exposed.
+The lab currently runs against synthetic Athens candidate profiles. No real users are exposed.
 
-## Candidate evaluation
+---
 
-Each pair is evaluated across five dimensions:
+## Stage 1 — Proposer
+
+The proposer asks:
+
+> What is the strongest evidence-grounded reason these two people might matter to each other?
+
+Each pair is evaluated across:
 
 1. **Shared core** — meaningful overlap in curiosity, conversational orientation, culture, place, making, learning, depth, or other latent themes.
-2. **Interesting divergence** — difference that appears capable of adding a new world rather than merely creating incompatibility.
-3. **Reciprocity** — whether each person appears to offer something the other has asked for. A one-sided useful introduction is penalized.
-4. **Current intention fit** — whether the introduction is relevant to what both people say they want now.
-5. **Boundary penalty** — conflicts with `Not this` preferences or reciprocal exclusions.
+2. **Interesting divergence** — difference that could add a new world rather than merely create incompatibility.
+3. **Reciprocity** — whether each person appears to offer something the other has asked for.
+4. **Directional reciprocity** — reciprocity is decomposed into `user → candidate` and `candidate → user`, so a strong aggregate cannot hide a one-sided connection.
+5. **Current intention fit** — whether the introduction is relevant to what both people want now.
+6. **Boundary penalty** — conflicts with `Not this` preferences or reciprocal exclusions.
 
-The current diagnostic total is:
+The proposer diagnostic total remains:
 
 ```text
 0.28 × shared core
@@ -32,42 +53,139 @@ The current diagnostic total is:
 − 0.38 × boundary penalty
 ```
 
-This formula is not a product truth. It is a testable v0.1 hypothesis.
+This formula is a testable hypothesis, not product truth.
 
-## Decision states
+The proposer may return an optimistic preliminary recommendation and a draft Connection Hypothesis. Neither is allowed to reach users yet.
 
-The engine returns one of three states:
+---
 
-- `introduce` — sufficiently strong total, shared core and reciprocity, without a serious boundary conflict;
-- `hold` — interesting but not yet convincing enough to interrupt two people;
-- `reject` — too weak or structurally conflicted.
+## Stage 2 — Adversarial critic
 
-The existence of `hold` is important. Bond should be allowed to say **not yet** rather than turning every candidate into content.
+The critic has a different objective:
 
-## Connection Hypothesis
+> Find the strongest reason this introduction is a mistake.
 
-The lab produces a deterministic draft explanation from the score structure. It is deliberately plain.
+It is deliberately not a second proposer and does not try to improve the proposal.
 
-A future AI-written Connection Hypothesis should only be allowed after the structured pair evaluation passes threshold. The language model should explain an already-grounded edge, not invent the edge itself.
+The current structured critic checks include:
 
-A future hypothesis generator must:
+- `boundary_conflict` — explicit or probable conflict with `Not this`;
+- `weak_reciprocity` — aggregate mutual value is too low;
+- `asymmetric_value` — one directional reciprocity estimate is much stronger than the other;
+- `thin_shared_core` — novelty lacks sufficient common ground;
+- `novelty_without_anchor` — difference is being rewarded simply because it is different;
+- `similarity_trap` — high similarity may reproduce an existing social world without adding much;
+- `weak_timing` — the pair may be interesting in general but irrelevant to current intentions;
+- `insufficient_evidence` — the human model is too sparse for a confident interruption;
+- `persuasive_story_risk` — the aggregate score sounds stronger than the number of independent positive reasons.
 
-- use only evidence permitted for explanation;
-- never reveal sensitive private onboarding material without explicit consent;
-- avoid numerical compatibility language;
-- explain both shared core and useful difference;
-- mention uncertainty when reciprocity is not well-supported;
-- survive a separate critic step before release.
+Each finding has a severity:
 
-## Adversarial critic — next step
+```text
+low → medium → high → blocking
+```
 
-Before a real introduction, a second evaluator should try to answer:
+The critic combines them into a diagnostic risk and a verdict:
 
-> Why should these two people **not** be introduced?
+```text
+clear | caution | oppose
+```
 
-It should look for superficial similarity, asymmetric value, duplicated social worlds, boundary conflicts, weak timing, forced novelty, and an explanation that sounds better than the evidence actually is.
+A blocking objection can never be rescued by a high proposer score.
 
-Only pairs that survive the critic should be candidates for a user-facing Connection Hypothesis.
+---
+
+## Stage 3 — Final threshold
+
+Neither proposer nor critic gets authority alone.
+
+The final gate enforces the principle:
+
+> Is there enough surviving evidence to justify interrupting two people's lives?
+
+### Hard rejection
+
+The current gate rejects when any of the following is true:
+
+- explicit boundary penalty reaches the blocking range;
+- the critic finds a blocking objection;
+- the proposal is below the minimum evidence floor;
+- critic risk/opposition is structurally too strong.
+
+### Introduction eligibility
+
+The current v1.1 gate requires all of the following:
+
+```text
+proposer total ≥ 62
+shared core ≥ 40
+aggregate reciprocity ≥ 52
+both directional reciprocity values ≥ 30
+current intention fit ≥ 42
+critic risk ≤ 27
+no high-severity critic finding
+```
+
+These numbers are intentionally visible and changeable during experimentation. They are not universal psychological constants.
+
+### Hold
+
+`hold` is a first-class outcome.
+
+A pair can be interesting without being ready. The gate may hold because:
+
+- shared core needs stronger evidence;
+- reciprocity is not yet convincing;
+- one direction of value is weak;
+- timing is uncertain;
+- critic risk remains above the release threshold;
+- proposal strength is promising but below interruption threshold.
+
+Bond should be allowed to say **not yet**.
+
+---
+
+## Survival score
+
+The lab ranks candidates using an internal survival score after criticism:
+
+```text
+survival score = proposer total − 0.35 × critic risk
+```
+
+Final decision class outranks survival score in sorting: `introduce` candidates appear before `hold`, which appear before `reject`.
+
+This number is diagnostic only and must never become a user-facing compatibility score.
+
+---
+
+## Connection Hypothesis release rule
+
+The proposer can draft a plausible explanation for many pairs. v1.1 deliberately separates **ability to tell a good story** from **permission to show that story**.
+
+A Connection Hypothesis becomes eligible only when:
+
+```text
+finalDecision === "introduce"
+```
+
+For `hold` and `reject`, the lab explicitly withholds it from the hypothetical user.
+
+This is a core safeguard:
+
+> Good prose must never rescue a weak match.
+
+The current deterministic hypothesis is still only a debug draft. A future AI-written hypothesis must additionally pass privacy and safety review and use only evidence approved for disclosure.
+
+---
+
+## Language handling
+
+The Athens prototype uses Unicode-safe tokenization and includes first-pass English/Greek semantic themes. Greek input should not be discarded simply because it contains non-Latin characters.
+
+This is still heuristic bilingual support, not full semantic multilingual understanding. A production embedding/reranking layer should later replace these lexical theme rules while preserving the same inspectable decision stages.
+
+---
 
 ## Why synthetic candidates first
 
@@ -78,6 +196,30 @@ Synthetic candidates let us deliberately construct difficult cases:
 - very high similarity with low novelty;
 - productive difference with a strong shared core;
 - one-sided usefulness;
-- explicit `Not this` conflicts.
+- explicit `Not this` conflicts;
+- a proposer that is excited but a critic that correctly vetoes;
+- a promising candidate that should be held rather than rejected.
 
-The purpose of the Matching Lab is therefore not to demonstrate that Bond can always find a match. It is to expose where the engine makes bad decisions while those decisions are still cheap to fix.
+The goal of the Matching Lab is not to demonstrate that Bond can always find a match. It is to expose bad decisions while those decisions are still cheap to fix.
+
+---
+
+## Next intelligence layer
+
+v1.1 completes the deterministic decision architecture. The next layer should not remove it.
+
+Future AI can improve:
+
+- semantic profile extraction;
+- multilingual candidate retrieval;
+- nuanced proposer reasoning;
+- adversarial critic reasoning;
+- privacy-safe Connection Hypothesis writing.
+
+But the architecture should remain:
+
+```text
+AI may propose.
+AI may criticize.
+Deterministic software controls the release gate.
+```
