@@ -15,12 +15,17 @@ v2.0 is split into two gates so the repository does not confuse **implemented ar
 - [x] Hypothesis privacy review after final matching gate
 - [x] Independent mutual acceptance state machine
 - [x] 48-hour introduction expiry contract
-- [x] Invisible rejection projection
+- [x] Invisible rejection projection for both sides
 - [x] Minimal identity only after mutual yes
-- [x] Conversation-open transition
-- [x] Pair-opening contract represented in the systems flow
+- [x] Narrow mutual-reveal RPC instead of broad profile access
+- [x] Server-controlled conversation-open transition
+- [x] Pair-specific opening generator fallback
+- [x] User-confirmed model evolution contract
+- [x] Current-intention reconfirmation helper
 - [x] Meaningful-encounter outcome events
 - [x] Meaningful Encounter Rate utility
+- [x] Similarity-only counterfactual baseline
+- [x] Bond-vs-similarity policy comparison utility
 - [x] Supabase/Postgres schema
 - [x] pgvector-ready semantic storage
 - [x] RLS on private user/model tables
@@ -36,7 +41,7 @@ v2.0 is split into two gates so the repository does not confuse **implemented ar
 v2 is **not a real-user product release** until all of these are complete:
 
 - [ ] Dedicated Supabase project deployed
-- [ ] Migration applied and reviewed
+- [ ] Migrations applied and reviewed
 - [ ] Authentication configured
 - [ ] 18+ enforcement implemented server-side
 - [ ] User export/delete flow
@@ -52,13 +57,14 @@ v2 is **not a real-user product release** until all of these are complete:
 - [ ] Real introduction delivery
 - [ ] Rejection-invisibility integration tests
 - [ ] Real-time pair messaging
-- [ ] rate limiting and spam/abuse controls
-- [ ] block/report review workflow
-- [ ] audit logging for serious moderation events
-- [ ] backup/recovery plan
-- [ ] pilot privacy policy and terms
-- [ ] closed Athens pilot cohort
-- [ ] pre-specified Meaningful Encounter Rate analysis
+- [ ] Rate limiting and spam/abuse controls
+- [ ] Block/report review workflow
+- [ ] Audit logging for serious moderation events
+- [ ] Backup/recovery plan
+- [ ] Pilot privacy policy and terms
+- [ ] Closed Athens pilot cohort
+- [ ] Pre-specified similarity-vs-Bond comparison
+- [ ] Pre-specified Meaningful Encounter Rate analysis
 
 ## Release language
 
