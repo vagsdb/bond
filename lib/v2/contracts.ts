@@ -7,6 +7,7 @@ export type SemanticDimension =
   | "desired_exposure"
   | "conversation_style"
   | "temperament"
+  | "conviviality"
   | "wants"
   | "not_this"
   | "social_intention"
