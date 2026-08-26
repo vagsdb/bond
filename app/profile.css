@@ -1,3 +1,11 @@
+.brandButton {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
 .modelStage {
   width: min(1040px, 100%);
 }
@@ -16,6 +24,13 @@
 
 .modelHeader h2 {
   max-width: 760px;
+}
+
+.modelLead {
+  max-width: 700px;
+  margin-left: 0;
+  margin-right: 0;
+  font-size: 16px;
 }
 
 .modelPrivacy {
@@ -224,7 +239,13 @@
 
 .modelActionsRight {
   display: flex;
+  align-items: center;
   gap: 10px;
+}
+
+.modelActionsRight .primary,
+.modelActionsRight .secondary {
+  margin-top: 0;
 }
 
 .textButton {
@@ -282,11 +303,11 @@
 
   .modelActionsRight {
     width: 100%;
+    flex-direction: column;
   }
 
   .modelActionsRight .primary,
   .modelActionsRight .secondary {
-    flex: 1;
-    margin-top: 0;
+    width: 100%;
   }
 }
