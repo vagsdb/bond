@@ -1,0 +1,31 @@
+.brandMark::after {
+  content: "The unexpected, with intention";
+  margin-left: 7px;
+  padding-left: 16px;
+  border-left: 1px solid var(--line-strong);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 430;
+  letter-spacing: .055em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .brandMark::after {
+    margin-left: 2px;
+    padding-left: 10px;
+    font-size: 9px;
+    letter-spacing: .025em;
+  }
+}
+
+@media (max-width: 430px) {
+  .brandMark::after {
+    content: "The unexpected, with intention";
+    max-width: 150px;
+    white-space: normal;
+    line-height: 1.25;
+    text-align: left;
+  }
+}
