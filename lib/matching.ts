@@ -18,6 +18,8 @@ export type MatchBreakdown = {
   sharedCore: number;
   interestingDivergence: number;
   reciprocity: number;
+  userToCandidate: number;
+  candidateToUser: number;
   intentionFit: number;
   boundaryPenalty: number;
   total: number;
@@ -61,7 +63,7 @@ const THEMES: Record<string, string[]> = {
   ],
   city: [
     "city", "urban", "street", "walk", "wander", "athens", "place", "neighborhood",
-    "πολη", "αστικ", "δρομο", "περπατ", "βολο", "αθηνα", "μερος", "γειτονια",
+    "πολη", "αστικ", "δρομο", "περπατ", "βολτ", "αθηνα", "μερος", "γειτονια",
   ],
   culture: [
     "music", "book", "literature", "museum", "exhibition", "culture", "cinema", "art",
@@ -192,16 +194,22 @@ function boundaryPenalty(model: HumanModel, candidate: CandidateProfile) {
   return clamp((userBoundaryHits + candidateBoundaryHits) * 34);
 }
 
-function reciprocalScore(model: HumanModel, candidate: CandidateProfile) {
+function reciprocalComponents(model: HumanModel, candidate: CandidateProfile) {
   const userOffers = [model.curiosity.evidence, ...model.onboarding, ...model.wants].join(" ");
   const candidateNeeds = [...candidate.wants, candidate.intention].join(" ");
   const candidateOffers = [candidate.world, ...candidate.curiosity, ...candidate.conversationStyle].join(" ");
   const userNeeds = [...model.wants, model.socialIntention, model.desiredExposure.evidence].join(" ");
 
-  const aToB = Math.max(overlapScore(userOffers, candidateNeeds), sharedThemeScore(userOffers, candidateNeeds));
-  const bToA = Math.max(overlapScore(candidateOffers, userNeeds), sharedThemeScore(candidateOffers, userNeeds));
-  const balance = 100 - Math.abs(aToB - bToA);
-  return clamp(aToB * 0.4 + bToA * 0.4 + balance * 0.2);
+  const userToCandidate = clamp(
+    Math.max(overlapScore(userOffers, candidateNeeds), sharedThemeScore(userOffers, candidateNeeds)),
+  );
+  const candidateToUser = clamp(
+    Math.max(overlapScore(candidateOffers, userNeeds), sharedThemeScore(candidateOffers, userNeeds)),
+  );
+  const balance = 100 - Math.abs(userToCandidate - candidateToUser);
+  const reciprocity = clamp(userToCandidate * 0.4 + candidateToUser * 0.4 + balance * 0.2);
+
+  return { userToCandidate, candidateToUser, reciprocity };
 }
 
 function intentionScore(model: HumanModel, candidate: CandidateProfile) {
@@ -232,6 +240,10 @@ function buildHypothesis(model: HumanModel, candidate: CandidateProfile, score: 
   return `${core}, ${difference}. ${reciprocity}`;
 }
 
+/**
+ * Proposer stage. This function is intentionally optimistic: it tries to construct the best
+ * evidence-grounded case for an introduction. The v1.1 critic and final gate live separately.
+ */
 export function evaluateCandidate(model: HumanModel, candidate: CandidateProfile): MatchEvaluation {
   const userText = textOfModel(model);
   const candidateText = textOfCandidate(candidate);
@@ -240,7 +252,7 @@ export function evaluateCandidate(model: HumanModel, candidate: CandidateProfile
   const thematicCore = sharedThemeScore(userText, candidateText);
   const sharedCore = clamp(lexicalCore * 0.35 + thematicCore * 0.65);
   const interestingDivergence = divergenceScore(model, candidate);
-  const reciprocity = reciprocalScore(model, candidate);
+  const { reciprocity, userToCandidate, candidateToUser } = reciprocalComponents(model, candidate);
   const intentionFit = intentionScore(model, candidate);
   const penalty = boundaryPenalty(model, candidate);
 
@@ -263,6 +275,7 @@ export function evaluateCandidate(model: HumanModel, candidate: CandidateProfile
   if (penalty >= 34) cautions.push("possible boundary conflict");
   if (reciprocity < 45) cautions.push("weak reciprocity");
   if (sharedCore < 35) cautions.push("shared core may be too thin");
+  if (Math.abs(userToCandidate - candidateToUser) >= 42) cautions.push("reciprocal value may be asymmetric");
 
   let decision: MatchEvaluation["decision"] = "hold";
   if (penalty >= 68 || total < 42) decision = "reject";
@@ -272,6 +285,8 @@ export function evaluateCandidate(model: HumanModel, candidate: CandidateProfile
     sharedCore,
     interestingDivergence,
     reciprocity,
+    userToCandidate,
+    candidateToUser,
     intentionFit,
     boundaryPenalty: penalty,
     total,
