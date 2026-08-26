@@ -7,6 +7,7 @@ import {
   type HumanModel,
   type HumanSignal,
 } from "../lib/human-model";
+import { inferConvivialityFromHumanModel } from "../lib/v2/conviviality";
 
 type Stage =
   | "landing"
@@ -88,6 +89,11 @@ export default function HomePage() {
   const progress = useMemo(
     () => Math.round(((promptIndex + 1) / starterPrompts.length) * 100),
     [promptIndex],
+  );
+
+  const conviviality = useMemo(
+    () => model ? inferConvivialityFromHumanModel(model).signal : null,
+    [model],
   );
 
   function begin() {
@@ -460,6 +466,7 @@ export default function HomePage() {
             <SignalCard title="Desired exposure" signal={model.desiredExposure} />
             <SignalCard title="Conversation style" signal={model.conversationStyle} />
             <SignalCard title="Temperament" signal={model.temperament} />
+            {conviviality && <SignalCard title="Conviviality" signal={conviviality} />}
           </div>
 
           <div className="profileEditGrid">
