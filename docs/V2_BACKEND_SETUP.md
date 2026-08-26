@@ -1,6 +1,6 @@
 # Bond v2.0 Backend Setup
 
-The repository now contains the v2 database migration, but the production backend is **not deployed by GitHub Pages**.
+The repository now contains the v2 database migrations, but the production backend is **not deployed by GitHub Pages**.
 
 GitHub Pages should continue to host the static prototype. Real users require a separate private backend.
 
@@ -25,15 +25,18 @@ Record:
 
 The service-role key must never be committed to GitHub or exposed to the browser.
 
-## 2. Apply the migration
+## 2. Apply the migrations
 
-Apply:
+Apply all files in `supabase/migrations/` in filename order. The current v2 set is:
 
 ```text
-supabase/migrations/20260826_bond_v2.sql
+20260826_bond_v2.sql
+20260826_bond_v2_reveal.sql
 ```
 
-The migration enables `pgcrypto` and `vector`, creates the v2 data model, enables RLS, and installs masked introduction/decision functions.
+The first migration enables `pgcrypto` and `vector`, creates the v2 data model, enables RLS, and installs masked introduction/decision functions.
+
+The second adds the narrow mutual-reveal RPC and the server-controlled transition that opens a pair conversation without weakening profile privacy.
 
 ## 3. Configure authentication
 
@@ -109,11 +112,15 @@ This is deliberate:
 
 Record decisions through `bond_record_decision()`.
 
+After mutual acceptance, obtain the deliberately narrow identity projection through `bond_revealed_profile()`. Direct reads of another user's private `profiles`, human model or semantic segments remain forbidden.
+
 ## 8. Messaging
 
 Conversation creation should occur only after `mutual_accept`.
 
-The server changes the introduction to `conversation_open`, inserts the conversation row and may create a pair-specific opening prompt. RLS then permits only the two participants to read/write messages.
+Use `bond_open_conversation()` to create/reuse the pair conversation and transition the introduction to `conversation_open`. That transition upgrades reveal level without making the private profile tables broadly readable.
+
+RLS then permits only the two participants to read/write messages.
 
 ## 9. Outcome learning
 
@@ -140,6 +147,8 @@ Before inviting real users, verify at minimum:
 - block symmetry tests;
 - no candidate enumeration from the browser;
 - hypothesis privacy tests;
+- mutual reveal cannot expose a non-participant;
+- conversation opening requires mutual acceptance;
 - account deletion/export path;
 - rate limiting;
 - report review workflow;
