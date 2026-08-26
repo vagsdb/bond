@@ -1,4 +1,5 @@
 import type { CandidateProfile } from "../matching";
+import { inferConviviality } from "./conviviality";
 import type {
   CandidateEligibility,
   RetrievedCandidate,
@@ -8,13 +9,14 @@ import type {
 } from "./contracts";
 
 const DEFAULT_WEIGHTS: Record<SemanticDimension, number> = {
-  curiosity: 0.22,
-  desired_exposure: 0.18,
-  conversation_style: 0.14,
-  temperament: 0.08,
-  wants: 0.16,
+  curiosity: 0.2,
+  desired_exposure: 0.16,
+  conversation_style: 0.12,
+  temperament: 0.06,
+  conviviality: 0.1,
+  wants: 0.15,
   not_this: 0,
-  social_intention: 0.22,
+  social_intention: 0.21,
   life_chapter: 0,
 };
 
@@ -151,6 +153,30 @@ export function candidateProfileToSemanticCandidate(
     visibility: "explanation_eligible" as const,
   });
 
+  const conviviality = inferConviviality([
+    candidate.world,
+    ...candidate.curiosity,
+    ...candidate.conversationStyle,
+    ...candidate.temperament,
+    ...candidate.wants,
+    ...candidate.notThis,
+    candidate.intention,
+    candidate.note,
+  ]);
+
+  const convivialitySegments = conviviality.strength === "unknown"
+    ? []
+    : [
+        {
+          ...segment(
+            "conviviality",
+            "conviviality",
+            [conviviality.signal.label, ...conviviality.cues].join(" · "),
+          ),
+          confidence: conviviality.signal.confidence,
+        },
+      ];
+
   return {
     identity: {
       userId: candidate.id,
@@ -178,6 +204,7 @@ export function candidateProfileToSemanticCandidate(
         ...candidate.curiosity.map((text, index) => segment(`c-${index}`, "curiosity", text)),
         ...candidate.conversationStyle.map((text, index) => segment(`cs-${index}`, "conversation_style", text)),
         ...candidate.temperament.map((text, index) => segment(`t-${index}`, "temperament", text)),
+        ...convivialitySegments,
         ...candidate.wants.map((text, index) => segment(`w-${index}`, "wants", text)),
         ...candidate.notThis.map((text, index) => ({
           ...segment(`n-${index}`, "not_this", text),
