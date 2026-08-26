@@ -8,7 +8,7 @@ The product is intentionally unlike conventional social or dating software: no f
 
 Bond is configured as a static Next.js export and includes an automated GitHub Pages workflow.
 
-**Target public URL:** `https://vagsdb.github.io/bond/`
+**Public prototype:** `https://vagsdb.github.io/bond/`
 
 For a new repository, GitHub requires one repository-level setting before the first deployment:
 
@@ -18,7 +18,7 @@ For a new repository, GitHub requires one repository-level setting before the fi
 
 After that, pushes to `main` publish automatically.
 
-## Current prototype
+## Current public prototype
 
 The current GitHub Pages prototype implements a deliberately low-friction, progressive-commitment flow:
 
@@ -44,6 +44,29 @@ The current interpretation layer is deliberately transparent and conservative:
 
 A future authenticated backend can replace this local-only layer without changing the product interaction model.
 
+## Internal Matching Lab
+
+Bond now includes an internal diagnostic surface at:
+
+`https://vagsdb.github.io/bond/lab/`
+
+The Matching Lab is **not** a public people browser. It reads the same browser-local Bond model and evaluates it against a deliberately varied set of synthetic Athens profiles.
+
+It exposes diagnostic numbers for:
+
+- shared core;
+- interesting divergence;
+- reciprocity;
+- current intention fit;
+- boundary penalty;
+- final internal score and `introduce / hold / reject` decision.
+
+It also produces a deterministic draft **Connection Hypothesis** and shows both positive evidence and reasons against an introduction.
+
+Numbers are visible only because the lab is a debugging instrument. The real Bond product should never show people a compatibility percentage.
+
+The current engine is intentionally deterministic. Its job is to make bad assumptions visible before an AI layer is allowed to make them persuasive.
+
 ## Run locally
 
 ```bash
@@ -52,6 +75,8 @@ npm run dev
 ```
 
 Then open `http://localhost:3000`.
+
+The local Matching Lab is at `http://localhost:3000/lab/`.
 
 ## Production build
 
@@ -69,20 +94,21 @@ Next.js exports the static Pages site to `out/`.
 4. Structured private human model ✅
 5. Want / Not This / social intention model ✅
 6. Progressive commitment + hidden detailed model ✅
-7. Candidate retrieval
-8. Shared-core + interesting-divergence scorer
-9. Reciprocity evaluation
-10. Adversarial match critic
-11. AI-written Connection Hypothesis
-12. Introduction state machine and expiry
-13. Mutual reveal
-14. Pair-specific opening experiment
-15. Messaging
-16. Outcome collection
-17. Closed same-city pilot
+7. Synthetic candidate retrieval scaffold ✅
+8. Shared-core + interesting-divergence scorer ✅
+9. Reciprocity + intention + boundary evaluation ✅
+10. Internal Matching Lab + deterministic hypothesis draft ✅
+11. Adversarial match critic
+12. AI-written Connection Hypothesis
+13. Introduction state machine and expiry
+14. Mutual reveal
+15. Pair-specific opening experiment
+16. Messaging
+17. Outcome collection
+18. Closed same-city pilot
 
 ## Core hypothesis
 
 > Can AI-curated shared-core/productive-divergence introductions create more “I’m glad we met” outcomes than conventional similarity-based matching?
 
-See [`PRODUCT_CONSTITUTION.md`](./PRODUCT_CONSTITUTION.md) for the non-negotiable design rules and [`docs/PRIVATE_HUMAN_MODEL.md`](./docs/PRIVATE_HUMAN_MODEL.md) for the current local model design.
+See [`PRODUCT_CONSTITUTION.md`](./PRODUCT_CONSTITUTION.md) for the non-negotiable design rules, [`docs/PRIVATE_HUMAN_MODEL.md`](./docs/PRIVATE_HUMAN_MODEL.md) for the local model design, and [`docs/MATCHING_MODEL.md`](./docs/MATCHING_MODEL.md) for the current matching assumptions.
