@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PilotBridge from "./PilotBridge";
+import PilotMount from "./PilotMount";
 import "./globals.css";
 import "./profile.css";
 import "./tagline.css";
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body>
         {children}
-        <PilotBridge />
+        <PilotMount />
       </body>
     </html>
   );
