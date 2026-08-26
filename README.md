@@ -4,14 +4,30 @@ Bond is the working repository for **Serendipity v0.1** — an AI-mediated human
 
 The product is intentionally unlike conventional social or dating software: no feed, no swiping, no follower graph, no popularity ranking, and no artificial matching quota.
 
+## GitHub Pages
+
+Bond is configured as a static Next.js export and includes an automated GitHub Pages workflow.
+
+**Target public URL:** `https://vagsdb.github.io/bond/`
+
+For a new repository, GitHub requires one repository-level setting before the first deployment:
+
+1. Open **Settings → Pages**.
+2. Under **Build and deployment → Source**, select **GitHub Actions**.
+3. Open **Actions** and run **Deploy Bond to GitHub Pages** once if a deployment has not started automatically.
+
+After that, pushes to `main` publish automatically.
+
 ## Current prototype
 
 The first runnable prototype contains:
 
-- landing experience
+- eye-smooth responsive landing experience
 - conversational onboarding shell
 - explicit anti-attention product philosophy
 - sparse waiting state: **“I’m looking.”**
+- static export support for GitHub Pages
+- automatic Pages deployment workflow
 
 The current onboarding is intentionally local and deterministic. The next implementation step is to replace the fixed prompts with a real AI onboarding service that extracts a private structured human model.
 
@@ -23,6 +39,14 @@ npm run dev
 ```
 
 Then open `http://localhost:3000`.
+
+## Production build
+
+```bash
+npm run build
+```
+
+Next.js exports the static Pages site to `out/`.
 
 ## v0.1 build sequence
 
