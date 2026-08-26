@@ -21,9 +21,13 @@ export type HumanModel = {
 
 const clean = (value: string | undefined) => (value ?? "").trim();
 
+function normalizeText(value: string) {
+  return value.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "");
+}
+
 function containsAny(text: string, terms: string[]) {
-  const haystack = text.toLowerCase();
-  return terms.some((term) => haystack.includes(term));
+  const haystack = normalizeText(text);
+  return terms.some((term) => haystack.includes(normalizeText(term)));
 }
 
 function inferConversationStyle(text: string): HumanSignal {
@@ -36,7 +40,10 @@ function inferConversationStyle(text: string): HumanSignal {
     };
   }
 
-  if (containsAny(value, ["deep", "long conversation", "debate", "challenge", "ideas", "philosoph"])) {
+  if (containsAny(value, [
+    "deep", "long conversation", "debate", "challenge", "ideas", "philosoph",
+    "βαθ", "μεγαλη συζητηση", "κουβεντα", "διαλογ", "διαφων", "προκλη", "ιδε", "φιλοσοφ",
+  ])) {
     return {
       label: "Depth-seeking",
       evidence: value,
@@ -44,7 +51,10 @@ function inferConversationStyle(text: string): HumanSignal {
     };
   }
 
-  if (containsAny(value, ["funny", "humor", "laugh", "playful", "lighthearted"])) {
+  if (containsAny(value, [
+    "funny", "humor", "laugh", "playful", "lighthearted",
+    "αστει", "χιουμορ", "γελιο", "παιχνιδ", "αναλαφρ",
+  ])) {
     return {
       label: "Playful and exploratory",
       evidence: value,
@@ -69,11 +79,17 @@ function inferTemperament(text: string): HumanSignal {
     };
   }
 
-  if (containsAny(value, ["quiet", "calm", "reserved", "introvert", "small group", "one-to-one"])) {
+  if (containsAny(value, [
+    "quiet", "calm", "reserved", "introvert", "small group", "one-to-one",
+    "ησυχ", "ηρεμ", "συγκρατη", "εσωστρεφ", "μικρη ομαδα", "ενας προς εναν",
+  ])) {
     return { label: "Quietly social", evidence: value, confidence: "tentative" };
   }
 
-  if (containsAny(value, ["spontaneous", "adventure", "unexpected", "wander", "explore"])) {
+  if (containsAny(value, [
+    "spontaneous", "adventure", "unexpected", "wander", "explore",
+    "αυθορμη", "περιπετ", "απροσδοκ", "περιπλαν", "εξερευν", "βολτα",
+  ])) {
     return { label: "Exploratory", evidence: value, confidence: "tentative" };
   }
 
