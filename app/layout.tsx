@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./profile.css";
+import "./lab/v1.1.css";
 
 export const metadata: Metadata = {
   title: "Bond — Serendipity",
