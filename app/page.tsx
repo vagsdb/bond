@@ -8,7 +8,14 @@ import {
   type HumanSignal,
 } from "../lib/human-model";
 
-type Stage = "landing" | "onboarding" | "profile" | "home";
+type Stage =
+  | "landing"
+  | "onboarding"
+  | "reflection"
+  | "boundaries"
+  | "intention"
+  | "home"
+  | "profile";
 
 const STORAGE_KEY = "bond.serendipity.human-model.v1";
 
@@ -17,6 +24,19 @@ const starterPrompts = [
   "What kind of person do you almost never meet, but wish you did?",
   "What are you already surrounded by that you do not need more of?",
 ];
+
+const reflectionLabels = [
+  "What pulls your attention",
+  "What feels missing",
+  "What you already have enough of",
+];
+
+function splitLines(value: string) {
+  return value
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 function SignalCard({ title, signal }: { title: string; signal: HumanSignal }) {
   return (
@@ -31,72 +51,6 @@ function SignalCard({ title, signal }: { title: string; signal: HumanSignal }) {
   );
 }
 
-function TagEditor({
-  label,
-  hint,
-  values,
-  placeholder,
-  onChange,
-}: {
-  label: string;
-  hint: string;
-  values: string[];
-  placeholder: string;
-  onChange: (values: string[]) => void;
-}) {
-  const [draft, setDraft] = useState("");
-
-  function add() {
-    const value = draft.trim();
-    if (!value || values.some((item) => item.toLowerCase() === value.toLowerCase())) return;
-    onChange([...values, value]);
-    setDraft("");
-  }
-
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      add();
-    }
-  }
-
-  return (
-    <article className="editorCard">
-      <div className="editorTop">
-        <span className="editorLabel">{label}</span>
-      </div>
-      <p className="editorHint">{hint}</p>
-
-      {values.length > 0 && (
-        <div className="tagList">
-          {values.map((value) => (
-            <span className="tag" key={value}>
-              <span>{value}</span>
-              <button
-                type="button"
-                aria-label={`Remove ${value}`}
-                onClick={() => onChange(values.filter((item) => item !== value))}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="tagComposer">
-        <input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-        />
-        <button type="button" aria-label={`Add to ${label}`} onClick={add}>+</button>
-      </div>
-    </article>
-  );
-}
-
 export default function HomePage() {
   const [stage, setStage] = useState<Stage>("landing");
   const [messages, setMessages] = useState<string[]>([]);
@@ -104,6 +58,11 @@ export default function HomePage() {
   const [promptIndex, setPromptIndex] = useState(0);
   const [model, setModel] = useState<HumanModel | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [editingReflection, setEditingReflection] = useState(false);
+  const [reflectionDrafts, setReflectionDrafts] = useState<string[]>(["", "", ""]);
+  const [wantText, setWantText] = useState("");
+  const [notText, setNotText] = useState("");
+  const [intentionText, setIntentionText] = useState("");
 
   useEffect(() => {
     try {
@@ -112,6 +71,10 @@ export default function HomePage() {
         const parsed = JSON.parse(saved) as HumanModel;
         if (parsed.version === 1) {
           setModel(parsed);
+          setMessages(parsed.onboarding ?? []);
+          setWantText(parsed.wants.join("\n"));
+          setNotText(parsed.notThis.join("\n"));
+          setIntentionText(parsed.socialIntention);
           setStage("home");
         }
       }
@@ -131,6 +94,12 @@ export default function HomePage() {
     setMessages([]);
     setDraft("");
     setPromptIndex(0);
+    setModel(null);
+    setEditingReflection(false);
+    setReflectionDrafts(["", "", ""]);
+    setWantText("");
+    setNotText("");
+    setIntentionText("");
     setStage("onboarding");
   }
 
@@ -149,7 +118,11 @@ export default function HomePage() {
 
     const initialModel = buildInitialHumanModel(completedMessages);
     setModel(initialModel);
-    setStage("profile");
+    setReflectionDrafts(completedMessages);
+    setWantText(initialModel.wants.join("\n"));
+    setNotText(initialModel.notThis.join("\n"));
+    setIntentionText("");
+    setStage("reflection");
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -159,13 +132,51 @@ export default function HomePage() {
     }
   }
 
-  function patchModel(patch: Partial<HumanModel>) {
-    setModel((current) => (current ? updateHumanModel(current, patch) : current));
+  function acceptReflection() {
+    setEditingReflection(false);
+    setStage("boundaries");
   }
 
-  function saveAndLook() {
+  function rebuildReflection() {
+    const cleaned = reflectionDrafts.map((item) => item.trim());
+    if (cleaned.some((item) => !item)) return;
+    const rebuilt = buildInitialHumanModel(cleaned);
+    setMessages(cleaned);
+    setModel(rebuilt);
+    setWantText(rebuilt.wants.join("\n"));
+    setNotText(rebuilt.notThis.join("\n"));
+    setEditingReflection(false);
+  }
+
+  function saveBoundaries() {
     if (!model) return;
-    const next = updateHumanModel(model, {});
+    const next = updateHumanModel(model, {
+      wants: splitLines(wantText),
+      notThis: splitLines(notText),
+    });
+    setModel(next);
+    setStage("intention");
+  }
+
+  function activateSignal() {
+    if (!model) return;
+    const next = updateHumanModel(model, {
+      wants: splitLines(wantText),
+      notThis: splitLines(notText),
+      socialIntention: intentionText.trim(),
+    });
+    setModel(next);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setStage("home");
+  }
+
+  function saveProfileEdits() {
+    if (!model) return;
+    const next = updateHumanModel(model, {
+      wants: splitLines(wantText),
+      notThis: splitLines(notText),
+      socialIntention: intentionText.trim(),
+    });
     setModel(next);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     setStage("home");
@@ -177,6 +188,11 @@ export default function HomePage() {
     setMessages([]);
     setDraft("");
     setPromptIndex(0);
+    setEditingReflection(false);
+    setReflectionDrafts(["", "", ""]);
+    setWantText("");
+    setNotText("");
+    setIntentionText("");
     setStage("landing");
   }
 
@@ -199,7 +215,11 @@ export default function HomePage() {
         <span className="version">SERENDIPITY v0.1</span>
       </header>
 
-      {!hydrated && <section className="stage waiting"><p className="eyebrow">RESTORING YOUR PRIVATE MODEL</p></section>}
+      {!hydrated && (
+        <section className="stage waiting">
+          <p className="eyebrow">RESTORING YOUR PRIVATE SIGNAL</p>
+        </section>
+      )}
 
       {hydrated && stage === "landing" && (
         <section className="stage hero" aria-labelledby="hero-title">
@@ -210,19 +230,19 @@ export default function HomePage() {
             <span className="gradientText"> you should probably know.</span>
           </h1>
           <p className="lead">
-            Bond does not give you people to browse. It learns who might matter to you,
-            then waits until there is a genuine reason to introduce you.
+            No people browser. No swipe deck. Bond learns enough to recognize an unusual
+            human connection, then gets out of the way.
           </p>
 
           <div className="actions">
-            <button className="primary" onClick={begin}>Begin quietly <span aria-hidden="true">→</span></button>
+            <button className="primary" onClick={begin}>Start without a profile <span aria-hidden="true">→</span></button>
           </div>
 
           <div className="principles" aria-label="Bond principles">
-            <span>No feed</span>
+            <span>Private by default</span>
+            <span>Progressive reveal</span>
             <span>No swiping</span>
             <span>No popularity</span>
-            <span>No manufactured urgency</span>
           </div>
         </section>
       )}
@@ -231,8 +251,8 @@ export default function HomePage() {
         <section className="stage conversation" aria-labelledby="onboarding-title">
           <div className="conversationHeader">
             <div>
-              <p className="eyebrow">GETTING TO KNOW YOU</p>
-              <h2 id="onboarding-title">I would rather understand you than make you fill out a profile.</h2>
+              <p className="eyebrow">THREE THINGS, THEN YOU ARE DONE</p>
+              <h2 id="onboarding-title">No biography. Just tell me what actually matters.</h2>
             </div>
             <div className="progressWrap" aria-label={`${progress}% complete`}>
               <span>{promptIndex + 1}/{starterPrompts.length}</span>
@@ -271,7 +291,7 @@ export default function HomePage() {
             <div className="composerFooter">
               <span className="shortcut">⌘/Ctrl + Enter</span>
               <button className="primary compact" onClick={submitAnswer} disabled={!draft.trim()}>
-                {promptIndex === starterPrompts.length - 1 ? "Show me what you understood" : "Continue"}
+                {promptIndex === starterPrompts.length - 1 ? "What did you hear?" : "Continue"}
                 <span aria-hidden="true">→</span>
               </button>
             </div>
@@ -279,18 +299,160 @@ export default function HomePage() {
         </section>
       )}
 
+      {hydrated && stage === "reflection" && model && (
+        <section className="stage lightStage" aria-labelledby="reflection-title">
+          <p className="eyebrow">WHAT I THINK I HEARD</p>
+          <h2 id="reflection-title">The shape is more important than a profile.</h2>
+          <p className="lead modelLead">
+            I am not diagnosing your personality. These are simply the three things you told me,
+            kept visible so you can correct me before they affect an introduction.
+          </p>
+
+          {!editingReflection ? (
+            <>
+              <div className="reflectionStack">
+                {messages.map((message, index) => (
+                  <article className="reflectionRow" key={`${message}-${index}`}>
+                    <span>{reflectionLabels[index]}</span>
+                    <p>{message}</p>
+                  </article>
+                ))}
+              </div>
+              <div className="quietChoice">
+                <button className="secondary inlineSecondary" type="button" onClick={() => setEditingReflection(true)}>Adjust something</button>
+                <button className="primary" type="button" onClick={acceptReflection}>Yes, that is the shape <span aria-hidden="true">→</span></button>
+              </div>
+            </>
+          ) : (
+            <div className="reflectionEditor">
+              {reflectionDrafts.map((value, index) => (
+                <label key={reflectionLabels[index]}>
+                  <span>{reflectionLabels[index]}</span>
+                  <textarea
+                    value={value}
+                    rows={3}
+                    onChange={(event) => {
+                      const next = [...reflectionDrafts];
+                      next[index] = event.target.value;
+                      setReflectionDrafts(next);
+                    }}
+                  />
+                </label>
+              ))}
+              <div className="quietChoice">
+                <button className="secondary inlineSecondary" type="button" onClick={() => setEditingReflection(false)}>Cancel</button>
+                <button className="primary" type="button" onClick={rebuildReflection}>Rebuild understanding</button>
+              </div>
+            </div>
+          )}
+
+          <p className="browserNote"><span /> Nothing here leaves this browser in the GitHub Pages prototype.</p>
+        </section>
+      )}
+
+      {hydrated && stage === "boundaries" && model && (
+        <section className="stage lightStage" aria-labelledby="boundaries-title">
+          <p className="eyebrow">DESIRE + NEGATIVE SPACE</p>
+          <h2 id="boundaries-title">Tell Bond what would enrich your world—and what would not.</h2>
+          <p className="lead modelLead">One line is enough. Add more only if it genuinely matters.</p>
+
+          <div className="dualPrompt">
+            <label className="softPanel positivePanel">
+              <span className="panelKicker">MORE OF THIS</span>
+              <strong>What kind of person or world would feel new?</strong>
+              <textarea
+                value={wantText}
+                onChange={(event) => setWantText(event.target.value)}
+                placeholder="Someone outside medicine who thinks visually…"
+                rows={5}
+              />
+            </label>
+
+            <label className="softPanel negativePanel">
+              <span className="panelKicker">NOT THIS</span>
+              <strong>What should I actively avoid giving you more of?</strong>
+              <textarea
+                value={notText}
+                onChange={(event) => setNotText(event.target.value)}
+                placeholder="Professional networking. People matched only because we share a job…"
+                rows={5}
+              />
+            </label>
+          </div>
+
+          <div className="quietChoice endChoice">
+            <button className="secondary inlineSecondary" type="button" onClick={() => setStage("reflection")}>Back</button>
+            <button className="primary" type="button" onClick={saveBoundaries}>Keep going <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+      )}
+
+      {hydrated && stage === "intention" && model && (
+        <section className="stage intentionStage" aria-labelledby="intention-title">
+          <div className="intentionHalo" aria-hidden="true" />
+          <p className="eyebrow">ONE LAST THING</p>
+          <h2 id="intention-title">Who would be interesting to meet <span className="gradientText">right now?</span></h2>
+          <p className="lead narrow">Not a search query. A quiet standing intention. Bond can wait until the right person exists.</p>
+
+          <div className="singleIntentComposer">
+            <textarea
+              value={intentionText}
+              onChange={(event) => setIntentionText(event.target.value)}
+              placeholder="Someone who challenges how I think without turning everything into a debate…"
+              rows={5}
+              autoFocus
+            />
+          </div>
+
+          <div className="quietChoice centeredChoice">
+            <button className="secondary inlineSecondary" type="button" onClick={() => setStage("boundaries")}>Back</button>
+            <button className="primary" type="button" onClick={activateSignal}>Open my signal <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+      )}
+
+      {hydrated && stage === "home" && model && (
+        <section className="stage waiting" aria-labelledby="waiting-title">
+          <p className="eyebrow">ATHENS · SIGNAL OPEN</p>
+          <div className="orbWrap" aria-hidden="true">
+            <div className="orbPulse" />
+            <div className="orb" />
+          </div>
+          <h1 id="waiting-title">I’m looking.</h1>
+          <p className="lead narrow">
+            There is nothing to browse. If I find a person worth interrupting you for,
+            the introduction will arrive with a reason.
+          </p>
+
+          {model.socialIntention && (
+            <button className="homeIntent intentButton" type="button" onClick={() => setStage("intention")}>
+              <span>Current intention · tap to change</span>
+              {model.socialIntention}
+            </button>
+          )}
+
+          <div className="waitingCard">
+            <div>
+              <span className="cardLabel">Matching principle</span>
+              <strong>Shared core + interesting divergence</strong>
+            </div>
+            <span className="searching"><i /> quiet search</span>
+          </div>
+
+          <button className="textLinkButton" type="button" onClick={() => setStage("profile")}>What Bond understands about me →</button>
+          <p className="principle">Sometimes the right result is nothing yet.</p>
+        </section>
+      )}
+
       {hydrated && stage === "profile" && model && (
         <section className="stage modelStage" aria-labelledby="model-title">
-          <div className="modelHeader">
+          <div className="modelHeader compactModelHeader">
             <div className="modelHeaderCopy">
-              <p className="eyebrow">YOUR PRIVATE HUMAN MODEL</p>
-              <h2 id="model-title">Here is what Bond currently understands about you.</h2>
-              <p className="lead modelLead">
-                Direct evidence stays direct. Tentative interpretations are marked as tentative.
-                Correct the model whenever it gets you wrong.
-              </p>
+              <p className="eyebrow">WHAT BOND UNDERSTANDS ABOUT ME</p>
+              <h2 id="model-title">The detailed model stays behind the experience.</h2>
+              <p className="lead modelLead">This is inspectable because you should always be able to see what is influencing an introduction.</p>
             </div>
-            <div className="modelPrivacy">Stored only in this browser</div>
+            <div className="modelPrivacy">Browser-local prototype</div>
           </div>
 
           <div className="modelGrid">
@@ -300,83 +462,33 @@ export default function HomePage() {
             <SignalCard title="Temperament" signal={model.temperament} />
           </div>
 
-          <div className="modelEditors">
-            <TagEditor
-              label="What I want"
-              hint="People, energies, perspectives or worlds you want more access to."
-              values={model.wants}
-              placeholder="e.g. someone outside my field"
-              onChange={(wants) => patchModel({ wants })}
-            />
-            <TagEditor
-              label="Not this"
-              hint="As important as desire: what should Bond actively avoid giving you more of?"
-              values={model.notThis}
-              placeholder="e.g. professional networking"
-              onChange={(notThis) => patchModel({ notThis })}
-            />
+          <div className="profileEditGrid">
+            <label className="profileEditPanel">
+              <span>What I want</span>
+              <textarea value={wantText} rows={4} onChange={(event) => setWantText(event.target.value)} />
+            </label>
+            <label className="profileEditPanel">
+              <span>Not this</span>
+              <textarea value={notText} rows={4} onChange={(event) => setNotText(event.target.value)} />
+            </label>
           </div>
 
-          <article className="intentionCard">
-            <div className="intentionTop">
-              <div>
-                <span className="editorLabel">Social intention</span>
-                <p className="intentionHint">Not a search query. A standing intention Bond can keep in mind until the right person exists.</p>
-              </div>
-            </div>
-            <textarea
-              className="intentionInput"
-              value={model.socialIntention}
-              onChange={(event) => patchModel({ socialIntention: event.target.value })}
-              placeholder="I would like to meet someone who…"
-              rows={4}
-            />
-          </article>
+          <label className="profileEditPanel fullProfileEdit">
+            <span>Current social intention</span>
+            <textarea value={intentionText} rows={4} onChange={(event) => setIntentionText(event.target.value)} />
+          </label>
 
           <div className="modelActions">
-            <button className="textButton" type="button" onClick={resetEverything}>Erase this model and start over</button>
+            <button className="textButton" type="button" onClick={resetEverything}>Erase my local model</button>
             <div className="modelActionsRight">
-              <button className="secondary" type="button" onClick={begin}>Talk to Bond again</button>
-              <button className="primary" type="button" onClick={saveAndLook}>This feels right <span aria-hidden="true">→</span></button>
+              <button className="secondary inlineSecondary" type="button" onClick={() => setStage("home")}>Cancel</button>
+              <button className="primary" type="button" onClick={saveProfileEdits}>Save quietly</button>
             </div>
           </div>
         </section>
       )}
 
-      {hydrated && stage === "home" && model && (
-        <section className="stage waiting" aria-labelledby="waiting-title">
-          <p className="eyebrow">ATHENS · ACTIVE</p>
-          <div className="orbWrap" aria-hidden="true">
-            <div className="orbPulse" />
-            <div className="orb" />
-          </div>
-          <h1 id="waiting-title">I’m looking.</h1>
-          <p className="lead narrow">
-            You do not need to search. If I find someone worth interrupting you for,
-            I’ll tell you.
-          </p>
-
-          {model.socialIntention && (
-            <div className="homeIntent">
-              <span>Current intention</span>
-              {model.socialIntention}
-            </div>
-          )}
-
-          <div className="waitingCard">
-            <div>
-              <span className="cardLabel">Your signal is open</span>
-              <strong>Shared core + interesting divergence</strong>
-            </div>
-            <span className="searching"><i /> searching</span>
-          </div>
-
-          <button className="secondary" onClick={() => setStage("profile")}>Review what Bond understands</button>
-          <p className="principle">Sometimes the right result is nothing yet.</p>
-        </section>
-      )}
-
-      <footer className="footer">Designed to leave the screen—and become a real encounter.</footer>
+      <footer className="footer">Designed to reveal less at first—and become more human over time.</footer>
     </main>
   );
 }
