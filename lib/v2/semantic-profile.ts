@@ -1,5 +1,6 @@
 import type { HumanModel, HumanSignal } from "../human-model";
 import type { SemanticDimension, SemanticProfile, SemanticSegment } from "./contracts";
+import { inferConvivialityFromHumanModel } from "./conviviality";
 
 function segment(
   id: string,
@@ -77,6 +78,18 @@ export function buildSemanticProfile(
     model.temperament.confidence,
   );
   if (temperament) segments.push(temperament);
+
+  const conviviality = inferConvivialityFromHumanModel(model);
+  if (conviviality.strength !== "unknown") {
+    const convivialitySegment = segment(
+      "conviviality",
+      "conviviality",
+      [conviviality.signal.label, ...conviviality.cues].join(" · "),
+      conviviality.signal.confidence,
+      true,
+    );
+    if (convivialitySegment) segments.push(convivialitySegment);
+  }
 
   segments.push(...listSegments("wants", model.wants, "want", true));
   segments.push(...listSegments("not_this", model.notThis, "not-this", false));
