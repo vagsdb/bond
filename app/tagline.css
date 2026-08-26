@@ -11,12 +11,32 @@
   white-space: nowrap;
 }
 
+/* Replace the legacy prototype label without adding visual noise to the header. */
+.version {
+  font-size: 0;
+}
+
+.version::after {
+  content: "v2.0 · ATHENS PILOT";
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 520;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .brandMark::after {
     margin-left: 2px;
     padding-left: 10px;
     font-size: 9px;
     letter-spacing: .025em;
+  }
+
+  .version::after {
+    font-size: 9px;
+    letter-spacing: .09em;
   }
 }
 
@@ -27,5 +47,9 @@
     white-space: normal;
     line-height: 1.25;
     text-align: left;
+  }
+
+  .version::after {
+    content: "v2.0";
   }
 }
